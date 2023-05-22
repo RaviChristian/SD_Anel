@@ -7,39 +7,61 @@ id_lider = 3
 class Processo:
     def __init__(self, id):
         self.id = id
-        self.processos_indisponiveis = []
         self.ativo = True
+        self.lider = None
+        self.nextProcesso = None
 
     # Método para enviar uma mensagem para outro processo
     def enviar_mensagem(self, destinatario, mensagem):
         time.sleep(0.5)
-        print(f"Processo {self.id}: Enviando mensagem para o processo {destinatario.id}: {mensagem}")
-        if processos[id_lider].ativo == True:
-            destinatario.receber_mensagem(mensagem)
-        else:
-            print(f"O processo {destinatario.id} não pode receber a mensagem, pois o líder está inativo.")
+        if destinatario.lider == destinatario.id and destinatario.ativo == False:
+            print(f"Processo {self.id}: Enviando mensagem para o processo {destinatario.id}: {mensagem}")
+            print(f"O processo {destinatario.id} é o lider e está inativo.")
             print("Iniciando uma nova eleição de líder \n")
-            self.iniciar_eleicao()
+            idEleicao = []
+            idAlreadySent = []   
+            self.eleicao(idEleicao,idAlreadySent)
             
+        print(f"Processo {self.id}: Enviando mensagem para o processo {destinatario.id}: {mensagem}")
 
-    def iniciar_eleicao(self):
-        global id_lider
 
-        for processo in processos:
-            if processo.ativo == True and processo.id > id_lider:
-                id_lider = processo.id
+    def eleicao(self,candidatos,alreadySentList):
+        if self.id in alreadySentList:
+            novoLider = max(candidatos)
+            print(f"Eleição completa, o novo lider é : {novoLider}")
+            self.lider = novoLider
+            setLiderList = [self.id]
+            self.setLider(novoLider,setLiderList)
+            return
+
+        alreadySentList.append(self.id)
+
+        if self.ativo == True:
+            candidatos.append(self.id)
         
-        print(f"O novo processo líder é : Processo {id_lider}\n")
+        processos[self.nextProcesso].eleicao(candidatos,alreadySentList)
 
+    def setLider(self,mensagem,alreadySet):
+        alreadySetList = alreadySet
+
+        for ids in alreadySet:
+            if self.id == ids:
+                return
+        
+        self.lider(mensagem)
+        alreadySetList.append(self.id)
+        self.nextProcesso.setLider(mensagem,alreadySetList)
 
     def receber_mensagem(self, mensagem):
+
         time.sleep(0.5)
-        global id_lider
 
         if mensagem == "Iniciando Thread":
             print(f"Processo {self.id}: Iniciando Thread")
             return
         
+        
+            
         print(f"Processo {self.id}: Recebendo mensagem: {mensagem} \n")
 
 
@@ -49,6 +71,9 @@ num_processos = 5
 
 # Criar os objetos de processo
 processos = [Processo(id) for id in range(num_processos)]
+for i in range(len(processos)):
+    processos[i].nextProcesso = (i + 1) % len(processos)
+    processos[i].lider = id_lider
 
 # Iniciar as threads para cada processo
 threads = []
@@ -66,7 +91,8 @@ processo_recebe = 4
 #print("lider atual: ",id_lider)
 processos[processo_envia].enviar_mensagem(processos[processo_recebe], f"Oi processo {processo_recebe}")
 
-processos[id_lider].ativo = False
+processos[3].ativo = False
+processos[4].ativo = False
 
 processo_envia = 2
 processo_recebe = 1
@@ -77,6 +103,12 @@ processos[processo_envia].enviar_mensagem(processos[processo_recebe], f"Oi proce
 
 processo_envia = 3
 processo_recebe = 2
+
+processos[processo_envia].enviar_mensagem(processos[processo_recebe], f"Oi processo {processo_recebe}")
+#print("lider atual: ",id_lider)
+
+processo_envia = 2
+processo_recebe = 3
 
 processos[processo_envia].enviar_mensagem(processos[processo_recebe], f"Oi processo {processo_recebe}")
 #print("lider atual: ",id_lider)
